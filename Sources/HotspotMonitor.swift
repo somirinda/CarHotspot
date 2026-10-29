@@ -179,8 +179,7 @@ final class HotspotMonitor: NSObject, ObservableObject {
         currentRouteName = names.isEmpty ? "无" : names.joined(separator: ", ")
         let connected = outputs.contains(where:) { out in
             let isBT = out.portType == .bluetoothHFP ||
-                       out.portType == .bluetoothA2DP ||
-                       out.portType == .bluetoothLEAudio
+                       out.portType == .bluetoothA2DP
             let nameOK = targetDeviceName.isEmpty ||
                          out.portName.localizedCaseInsensitiveContains(targetDeviceName)
             return isBT && nameOK
