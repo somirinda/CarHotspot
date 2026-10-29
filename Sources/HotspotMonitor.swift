@@ -22,7 +22,7 @@ struct DiscoveredDevice: Identifiable, Hashable {
 ///
 /// 开关热点由「快捷指令」App 里自建的「设定个人热点」动作完成（iOS 16 自带该动作），
 /// 本 App 只用 shortcuts:// URL 触发它：全程公开 API、无私有框架、无特殊 entitlement。
-final class HotspotMonitor: ObservableObject {
+final class HotspotMonitor: NSObject, ObservableObject {
     static let shared = HotspotMonitor()
 
     enum MonitorMode: String, CaseIterable, Identifiable {
@@ -177,7 +177,7 @@ final class HotspotMonitor: ObservableObject {
         let outputs = session.currentRoute.outputs
         let names = outputs.map { $0.portName }
         currentRouteName = names.isEmpty ? "无" : names.joined(separator: ", ")
-        let connected = outputs.contains { out in
+        let connected = outputs.contains(where:) { out in
             let isBT = out.portType == .bluetoothHFP ||
                        out.portType == .bluetoothA2DP ||
                        out.portType == .bluetoothLEAudio
