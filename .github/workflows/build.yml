@@ -15,20 +15,23 @@ jobs:
       - name: 拉取代码
         uses: actions/checkout@v4
 
-      - name: 诊断环境（Xcode / xcodegen 版本）
+      - name: 诊断环境
         run: |
           xcodebuild -version
           swift --version
-          which xcodegen || echo "xcodegen 尚未安装（下一步安装）"
+          which xcodegen || echo "xcodegen 尚未安装"
 
-      - name: 安装 xcodegen（由 project.yml 生成 Xcode 工程，无需在 Mac 上手动建）
+      - name: 安装 xcodegen
         run: brew install xcodegen
 
       - name: 生成 Xcode 工程
         run: xcodegen generate
 
-      - name: 未签名编译（TrollStore 安装时会用自己的证书重签，无需苹果开发者账号）
-        run: xcodebuild build -project CarHotspot.xcodeproj -scheme CarHotspot -configuration Release -destination generic/platform=iOS -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= ARCHS=arm64 ONLY_ACTIVE_ARCH=NO ENABLE_BITCODE=NO
+      - name: 确认工程结构
+        run: xcodebuild -list -project CarHotspot.xcodeproj
+
+      - name: 未签名编译
+        run: xcodebuild build -project CarHotspot.xcodeproj -target CarHotspot -configuration Release -destination generic/platform=iOS -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= ARCHS=arm64 ONLY_ACTIVE_ARCH=NO ENABLE_BITCODE=NO
 
       - name: 打包成 IPA
         run: |
@@ -36,7 +39,7 @@ jobs:
           cp -r build/Build/Products/Release-iphoneos/CarHotspot.app Payload/
           zip -r CarHotspot.ipa Payload
 
-      - name: 创建 Release（得到永久直链，手机可一键安装）
+      - name: 创建 Release
         run: gh release create "ipa-build-${{ github.run_number }}" CarHotspot.ipa --repo "${{ github.repository }}" --title "CarHotspot.ipa (build ${{ github.run_number }})" --notes "云端自动构建 · 未签名 IPA · 请用 TrollStore 安装" --latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
