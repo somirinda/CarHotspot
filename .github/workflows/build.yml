@@ -31,7 +31,7 @@ jobs:
         run: xcodebuild -list -project CarHotspot.xcodeproj
 
       - name: 未签名编译
-        run: xcodebuild build -project CarHotspot.xcodeproj -target CarHotspot -configuration Release -destination generic/platform=iOS -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= ARCHS=arm64 ONLY_ACTIVE_ARCH=NO ENABLE_BITCODE=NO
+        run: xcodebuild build -project CarHotspot.xcodeproj -scheme CarHotspot -configuration Release -destination generic/platform=iOS -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= ARCHS=arm64 ONLY_ACTIVE_ARCH=NO ENABLE_BITCODE=NO
 
       - name: 打包成 IPA
         run: |
