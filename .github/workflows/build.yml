@@ -55,6 +55,7 @@ jobs:
             -configuration Release \
             -destination generic/platform=iOS \
             -derivedDataPath build \
+            SWIFT_VERSION=5.10 \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY= \
@@ -62,7 +63,13 @@ jobs:
             DEVELOPMENT_TEAM= \
             ARCHS=arm64 \
             ONLY_ACTIVE_ARCH=NO \
-            ENABLE_BITCODE=NO 2>&1 | tee build.log
+            ENABLE_BITCODE=NO 2>&1 | tee build.log || {
+              echo ""
+              echo "===== 编译错误摘要（请把下面这些 error 行发我）====="
+              grep -E 'error:|error generated|BUILD FAILED' build.log | head -60
+              echo "=================================================="
+              exit 1
+            }
 
       - name: 打包成 IPA
         run: |
