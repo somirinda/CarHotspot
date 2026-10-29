@@ -73,7 +73,7 @@ final class HotspotMonitor: NSObject, ObservableObject {
     private var bleWatchdog: Timer?
     private var presenceFallback = false   // 车机 BLE 不可连接时，退回"广播存在性"检测
 
-    init() {
+    override init() {
         let d = UserDefaults.standard
         _targetDeviceName = Published(initialValue: d.string(forKey: "targetDeviceName") ?? "")
         _onShortcutName  = Published(initialValue: d.string(forKey: "onShortcutName") ?? "车机热点开")
