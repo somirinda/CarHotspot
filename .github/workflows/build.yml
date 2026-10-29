@@ -19,33 +19,70 @@ jobs:
         run: |
           xcodebuild -version
           swift --version
-          which xcodegen || echo "xcodegen 尚未安装"
 
-      - name: 安装 xcodegen
-        run: brew install xcodegen
+      - name: 安装 xcodegen（直接下载官方二进制，绕开 brew 避免失败）
+        run: |
+          set -e
+          mkdir -p tools
+          TAG=$(curl -s https://api.github.com/repos/yonaskolb/XcodeGen/releases/latest | grep -o '"tag_name": *"[^"]*"' | head -1 | cut -d'"' -f4)
+          if [ -z "$TAG" ]; then TAG="2.42.0"; fi
+          echo "xcodegen 版本: $TAG"
+          for i in 1 2 3; do
+            if curl -fL "https://github.com/yonaskolb/XcodeGen/releases/download/$TAG/xcodegen.zip" -o tools/xcodegen.zip; then
+              echo "下载成功"; break
+            fi
+            echo "下载失败，重试 ($i)…"; sleep 5
+          done
+          unzip -o tools/xcodegen.zip -d tools/xcodegen_bin
+          BIN=$(find tools/xcodegen_bin -name xcodegen -type f | head -1)
+          echo "xcodegen 二进制: $BIN"
+          echo "$(dirname "$BIN")" >> "$GITHUB_PATH"
 
       - name: 生成 Xcode 工程
-        run: xcodegen generate
+        run: |
+          xcodegen generate --spec project.yml
+          ls -la CarHotspot.xcodeproj
 
       - name: 确认工程结构
         run: xcodebuild -list -project CarHotspot.xcodeproj
 
-      - name: 未签名编译
-        run: xcodebuild build -project CarHotspot.xcodeproj -scheme CarHotspot -configuration Release -destination generic/platform=iOS -derivedDataPath build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY= CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM= ARCHS=arm64 ONLY_ACTIVE_ARCH=NO ENABLE_BITCODE=NO
+      - name: 未签名编译（TrollStore 安装时用自己的证书重签，无需苹果账号）
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project CarHotspot.xcodeproj \
+            -scheme CarHotspot \
+            -configuration Release \
+            -destination generic/platform=iOS \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY= \
+            CODE_SIGN_STYLE=Manual \
+            DEVELOPMENT_TEAM= \
+            ARCHS=arm64 \
+            ONLY_ACTIVE_ARCH=NO \
+            ENABLE_BITCODE=NO 2>&1 | tee build.log
 
       - name: 打包成 IPA
         run: |
+          set -e
+          APP=$(find build/Build/Products/Release-iphoneos -name "CarHotspot.app" -maxdepth 1 | head -1)
+          if [ -z "$APP" ]; then echo "未找到 CarHotspot.app，构建可能失败"; exit 1; fi
+          rm -rf Payload
           mkdir -p Payload
-          cp -r build/Build/Products/Release-iphoneos/CarHotspot.app Payload/
+          cp -r "$APP" Payload/
           zip -r CarHotspot.ipa Payload
+          ls -la CarHotspot.ipa
 
-      - name: 创建 Release
+      - name: 创建 Release（得到永久直链，手机可一键安装）
         run: gh release create "ipa-build-${{ github.run_number }}" CarHotspot.ipa --repo "${{ github.repository }}" --title "CarHotspot.ipa (build ${{ github.run_number }})" --notes "云端自动构建 · 未签名 IPA · 请用 TrollStore 安装" --latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 上传构建产物
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: CarHotspot.ipa
           path: CarHotspot.ipa
