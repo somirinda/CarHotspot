@@ -1,0 +1,33 @@
+name: CarHotspot
+options:
+  bundleIdPrefix: com.yourname
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  CarHotspot:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: Sources
+    info:
+      path: Sources/Info.plist
+    entitlements:
+      path: Sources/CarHotspot.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.yourname.carhotspot
+        CODE_SIGN_ENTITLEMENTS: Sources/CarHotspot.entitlements
+        GENERATE_INFOPLIST_FILE: false
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        ARCHS: arm64
+schemes:
+  CarHotspot:
+    build:
+      targets:
+        CarHotspot: all
+    run:
+      config: Release
+    archive:
+      config: Release
